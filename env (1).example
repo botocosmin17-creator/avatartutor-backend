@@ -1,0 +1,10 @@
+# AvatarTutor Backend Environment Variables
+
+# Claude/Anthropic API
+ANTHROPIC_API_KEY=sk-ant-xxx...
+
+# ElevenLabs TTS API
+ELEVENLABS_API_KEY=xxx...
+
+# Server Port (Railway sets this automatically)
+PORT=8000
