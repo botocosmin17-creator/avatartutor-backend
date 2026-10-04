@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AvatarTutor - AI-Powered Exam Prep</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --secondary: #ec4899;
+            --accent: #14b8a6;
+            --dark: #1f2937;
+            --light: #f3f4f6;
+            --border: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            min-height: 100vh;
+        }
+
+        /* ============ SIDEBAR ============ */
+        .sidebar {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow-y: auto;
+            position: sticky;
+            top: 0;
+            max-height: 100vh;
+        }
+
+        .sidebar h2 {
+            color: var(--primary);
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 14px;
+            text-transform: uppercase;
+            color: #6b7280;
+            margin-bottom: 12px;
+        }
+
+        .settings-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .setting-item label {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        select, input[type="checkbox"] {
+            padding: 8px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .toggle-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .toggle-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        /* ============ MAIN CONTENT ============ */
+        .container {
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 28px;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .stat-badge {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        /* ============ FILE UPLOAD ============ */
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .upload-section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .upload-zone {
+            border: 3px dashed var(--primary);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-zone:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: #4f46e5;
+        }
+
+        .upload-zone.dragover {
+            background: rgba(99, 102, 241, 0.15);
+            border-color: #4f46e5;
+        }
+
+        .upload-zone p {
+            margin: 10px 0;
+            color: #6b7280;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .upload-status {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .upload-status.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .upload-status.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* ============ KNOWLEDGE TREE ============ */
+        .tree-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tree-section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        #treeCanvas {
+            width: 100%;
+            max-width: 600px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            display: block;
+            margin: 0 auto 20px;
+        }
+
+        .tree-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+            border: 2px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            border-color: var(--primary);
+        }
+
+        /* ============ BADGES ============ */
+        .badges-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .badges-section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .badges-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+        }
+
+        .badge-item {
+            text-align: center;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .badge-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+
+        .badge-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .badge-tier {
+            font-size: 11px;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .badge-tier.bronze {
+            color: #b45309;
+        }
+
+        .badge-tier.silver {
+            color: #4b5563;
+        }
+
+        .badge-tier.gold {
+            color: #b91c1c;
+        }
+
+        /* ============ LEADERBOARD ============ */
+        .leaderboard-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .leaderboard-section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th {
+            background: var(--light);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #6b7280;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .leaderboard-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .leaderboard-table tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        /* ============ QUIZ SECTION ============ */
+        .quiz-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .quiz-section h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .questions-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .question-card {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent);
+        }
+
+        .question-card h4 {
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .option {
+            padding: 10px;
+            background: white;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .option.correct {
+            background: #d1fae5;
+            border-color: var(--success);
+            color: var(--success);
+        }
+
+        .option.incorrect {
+            background: #fee2e2;
+            border-color: var(--error);
+            color: var(--error);
+        }
+
+        .option.show-correct {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #3b82f6;
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--primary);
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .status-message.success {
+            background: #d1fae5;
+            color: #059669;
+            border: 2px solid var(--success);
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #dc2626;
+            border: 2px solid var(--error);
+        }
+
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <h2>⚙️ Settings</h2>
+
+            <div class="sidebar-section">
+                <h3>Difficulty</h3>
+                <div class="settings-group">
+                    <label>
+                        <input type="radio" name="difficulty" value="easy"> Easy
+                    </label>
+                    <label>
+                        <input type="radio" name="difficulty" value="medium" checked> Medium
+                    </label>
+                    <label>
+                        <input type="radio" name="difficulty" value="hard"> Hard
+                    </label>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Study Time</h3>
+                <select id="studyTime">
+                    <option value="15">15 minutes</option>
+                    <option value="30" selected>30 minutes</option>
+                    <option value="60">1 hour</option>
+                </select>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Questions</h3>
+                <select id="numQuestions">
+                    <option value="10" selected>10 questions</option>
+                    <option value="20">20 questions</option>
+                    <option value="25">25 questions</option>
+                </select>
+                <input type="number" id="customQuestions" placeholder="Or enter custom number" min="1" max="100">
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Privacy</h3>
+                <div class="toggle-item">
+                    <input type="checkbox" id="compareColleagues">
+                    <label for="compareColleagues">Compare with colleagues?</label>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <h3>Subject</h3>
+                <p id="subjectDetected" style="font-size: 13px; color: #6b7280;">Waiting for upload...</p>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="container">
+            <header>
+                <div>
+                    <h1>🎓 AvatarTutor</h1>
+                    <p style="color: #6b7280; font-size: 14px;">AI-Powered Exam Preparation</p>
+                </div>
+                <div class="header-stats">
+                    <div class="stat-badge">
+                        <div class="stat-value" id="score">0</div>
+                        <div class="stat-label">Score</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="streak">0</div>
+                        <div class="stat-label">Streak</div>
+                    </div>
+                    <div class="stat-badge">
+                        <div class="stat-value" id="accuracy">0%</div>
+                        <div class="stat-label">Accuracy</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- FILE UPLOAD -->
+            <div class="upload-section">
+                <h2>📤 Upload Study Material</h2>
+                <div class="upload-zone" id="uploadZone">
+                    <p><strong>Drag & drop your PDF or Word document here</strong></p>
+                    <p style="font-size: 12px;">or click to select</p>
+                </div>
+                <input type="file" id="fileInput" accept=".pdf,.docx,.doc">
+                <div id="uploadStatus"></div>
+            </div>
+
+            <!-- KNOWLEDGE TREE -->
+            <div class="tree-section">
+                <h2>🌳 Knowledge Tree</h2>
+                <canvas id="treeCanvas" width="600" height="400"></canvas>
+                <div class="tree-controls">
+                    <button class="btn-secondary" onclick="shareTreeAsImage()">📸 Share on Social</button>
+                    <button class="btn-secondary" onclick="refreshTree()">🔄 Refresh</button>
+                </div>
+            </div>
+
+            <!-- BADGES -->
+            <div class="badges-section">
+                <h2>🏆 Achievements</h2>
+                <div class="badges-grid" id="badgesGrid">
+                    <p style="color: #6b7280;">Start practicing to earn badges!</p>
+                </div>
+            </div>
+
+            <!-- LEADERBOARD -->
+            <div class="leaderboard-section" id="leaderboardSection" style="display: none;">
+                <h2>🏅 Leaderboard</h2>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Colleague</th>
+                            <th>Score</th>
+                            <th>Badges</th>
+                            <th>Streak</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- QUIZ -->
+            <div class="quiz-section">
+                <h2>📝 Generate Practice Questions</h2>
+                <div class="input-group">
+                    <textarea id="contentInput" placeholder="Paste study material, or upload a file above..."></textarea>
+                    <button class="btn-primary" onclick="generateQuestions()" style="height: fit-content;">Generate</button>
+                </div>
+                <div id="generateStatus"></div>
+                <div class="questions-list" id="questionsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ STATE MANAGEMENT ============
+        const state = {
+            userId: localStorage.getItem("avatartutor_user_id") || "user_" + Math.random().toString(36).substr(2, 9),
+            currentQuestions: [],
+            answeredQuestions: {},
+            userStats: {
+                score: parseInt(localStorage.getItem("avatartutor_score") || "0"),
+                streak: 0,
+                correctAnswers: 0,
+                totalAnswered: 0
+            },
+            userBadges: [],
+            knowledgeTree: {},
+            subject: "general"
+        };
+
+        // Save userId to localStorage
+        localStorage.setItem("avatartutor_user_id", state.userId);
+
+        // Backend URL
+        window.BACKEND_URL = "https://avatartutor-backend-production.up.railway.app";
+
+        // ============ INITIALIZATION ============
+        document.addEventListener("DOMContentLoaded", () => {
+            loadUserProfile();
+            initUploadZone();
+            initSettingsListeners();
+            drawKnowledgeTree();
+            updateStats();
+        });
+
+        // ============ FILE UPLOAD ============
+        function initUploadZone() {
+            const uploadZone = document.getElementById("uploadZone");
+            const fileInput = document.getElementById("fileInput");
+
+            uploadZone.addEventListener("click", () => fileInput.click());
+            uploadZone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                uploadZone.classList.add("dragover");
+            });
+            uploadZone.addEventListener("dragleave", () => uploadZone.classList.remove("dragover"));
+            uploadZone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove("dragover");
+                uploadFile(e.dataTransfer.files[0]);
+            });
+
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files[0]) uploadFile(e.target.files[0]);
+            });
+        }
+
+        async function uploadFile(file) {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("user_id", state.userId);
+
+            const status = document.getElementById("uploadStatus");
+            status.innerHTML = '<div class="loading"><div class="spinner"></div> Uploading and extracting...</div>';
+
+            try {
+                const response = await fetch(`${window.BACKEND_URL}/api/upload`, {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Upload failed");
+
+                const data = await response.json();
+                state.subject = data.subject_detected;
+                document.getElementById("subjectDetected").textContent = `📌 ${data.subject_detected}`;
+                document.getElementById("contentInput").value = data.content_preview;
+
+                status.innerHTML = `<div class="status-message success">✓ File uploaded! Subject detected: <strong>${data.subject_detected}</strong></div>`;
+                drawKnowledgeTree();
+            } catch (error) {
+                status.innerHTML = `<div class="status-message error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        // ============ SETTINGS ============
+        function initSettingsListeners() {
+            document.querySelectorAll("input[name='difficulty']").forEach(input => {
+                input.addEventListener("change", (e) => {
+                    localStorage.setItem("avatartutor_difficulty", e.target.value);
+                });
+            });
+
+            document.getElementById("studyTime").addEventListener("change", (e) => {
+                localStorage.setItem("avatartutor_study_time", e.target.value);
+            });
+
+            document.getElementById("numQuestions").addEventListener("change", (e) => {
+                localStorage.setItem("avatartutor_num_questions", e.target.value);
+            });
+
+            document.getElementById("compareColleagues").addEventListener("change", (e) => {
+                localStorage.setItem("avatartutor_compare", e.target.checked);
+                if (e.target.checked) loadLeaderboard();
+            });
+        }
+
+        function getSettings() {
+            return {
+                difficulty: document.querySelector("input[name='difficulty']:checked")?.value || "medium",
+                studyTime: document.getElementById("studyTime").value,
+                numQuestions: document.getElementById("customQuestions").value || document.getElementById("numQuestions").value,
+                compareColleagues: document.getElementById("compareColleagues").checked
+            };
+        }
+
+        // ============ QUIZ GENERATION ============
+        async function generateQuestions() {
+            const content = document.getElementById("contentInput").value;
+            const settings = getSettings();
+
+            if (!content.trim()) {
+                showMessage("generateStatus", "Please enter or upload study material", "error");
+                return;
+            }
+
+            const status = document.getElementById("generateStatus");
+            status.innerHTML = '<div class="loading"><div class="spinner"></div> Generating questions...</div>';
+
+            try {
+                const response = await fetch(`${window.BACKEND_URL}/api/generatequestions`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        content,
+                        difficulty: settings.difficulty,
+                        num_questions: parseInt(settings.numQuestions),
+                        subject: state.subject
+                    })
+                });
+
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+                const data = await response.json();
+                state.currentQuestions = data.questions;
+                state.answeredQuestions = {};
+                renderQuestions();
+                status.innerHTML = '<div class="status-message success">✓ Questions generated successfully!</div>';
+                document.getElementById("contentInput").value = "";
+            } catch (error) {
+                status.innerHTML = `<div class="status-message error">❌ Error: ${error.message}</div>`;
+            }
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById("questionsList");
+
+            if (!state.currentQuestions || state.currentQuestions.length === 0) {
+                container.innerHTML = '<p style="color: #6b7280;">No questions yet. Generate some to get started!</p>';
+                return;
+            }
+
+            container.innerHTML = state.currentQuestions.map((q, idx) => {
+                const answered = state.answeredQuestions[idx];
+                const isAnswered = answered !== undefined;
+
+                return `
+                    <div class="question-card">
+                        <h4>Question ${idx + 1}: ${q.question}</h4>
+                        <div class="options">
+                            ${q.options.map((opt, optIdx) => {
+                                let optionClass = "option";
+                                if (isAnswered) {
+                                    if (optIdx === answered.selected) {
+                                        optionClass += answered.isCorrect ? " correct" : " incorrect";
+                                    } else if (optIdx === q.correct && answered.selected !== q.correct) {
+                                        optionClass += " show-correct";
+                                    }
+                                }
+                                return `
+                                    <div class="${optionClass}" onclick="selectAnswer(${idx}, ${optIdx})" ${isAnswered ? 'style="pointer-events: none;"' : ''}>
+                                        ${String.fromCharCode(65 + optIdx)}. ${opt}
+                                    </div>
+                                `;
+                            }).join("")}
+                        </div>
+                        ${isAnswered ? `
+                            <div style="margin-top: 15px; padding: 12px; border-radius: 8px; ${answered.isCorrect ? "background: #d1fae5; border: 2px solid #10b981;" : "background: #fee2e2; border: 2px solid #ef4444;"}">
+                                <strong style="color: ${answered.isCorrect ? "#059669" : "#dc2626"}">
+                                    ${answered.isCorrect ? "✓ Correct!" : "✗ Incorrect"}
+                                </strong>
+                                ${q.explanation ? `<div style="margin-top: 10px; color: #374151;"><strong>Explanation:</strong> ${q.explanation}</div>` : ""}
+                            </div>
+                        ` : ""}
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function selectAnswer(questionIdx, optionIdx) {
+            if (state.answeredQuestions[questionIdx] !== undefined) return;
+
+            const question = state.currentQuestions[questionIdx];
+            const isCorrect = optionIdx === question.correct;
+
+            state.answeredQuestions[questionIdx] = {
+                selected: optionIdx,
+                isCorrect: isCorrect
+            };
+
+            if (isCorrect) {
+                state.userStats.correctAnswers++;
+                state.userStats.streak++;
+                state.userStats.score += 10;
+            } else {
+                state.userStats.streak = 0;
+                state.userStats.score = Math.max(0, state.userStats.score - 5);
+            }
+
+            state.userStats.totalAnswered++;
+            updateStats();
+            renderQuestions();
+        }
+
+        function updateStats() {
+            document.getElementById("score").textContent = state.userStats.score;
+            document.getElementById("streak").textContent = state.userStats.streak;
+            const accuracy = state.userStats.totalAnswered > 0
+                ? Math.round((state.userStats.correctAnswers / state.userStats.totalAnswered) * 100)
+                : 0;
+            document.getElementById("accuracy").textContent = accuracy + "%";
+
+            localStorage.setItem("avatartutor_score", state.userStats.score);
+        }
+
+        function showMessage(elementId, message, type) {
+            document.getElementById(elementId).innerHTML = `<div class="status-message ${type}">${message}</div>`;
+        }
+
+        // ============ KNOWLEDGE TREE ============
+        function drawKnowledgeTree() {
+            const canvas = document.getElementById("treeCanvas");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw tree trunk
+            ctx.fillStyle = "#8b4513";
+            ctx.fillRect(280, 250, 40, 120);
+
+            // Draw leaves (animated)
+            const leaves = [
+                {x: 300, y: 100, label: state.subject},
+                {x: 200, y: 150, label: "Reading", state: getLeafState()},
+                {x: 400, y: 150, label: "Writing", state: getLeafState()},
+                {x: 150, y: 200, label: "Practice", state: getLeafState()},
+                {x: 450, y: 200, label: "Review", state: getLeafState()}
+            ];
+
+            leaves.forEach((leaf, idx) => {
+                const colors = {
+                    "green": "#10b981",
+                    "yellow": "#f59e0b",
+                    "red": "#ef4444",
+                    "reset": "#d1d5db"
+                };
+
+                ctx.fillStyle = colors[leaf.state] || "#10b981";
+                ctx.beginPath();
+                ctx.arc(leaf.x, leaf.y, 25, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = "white";
+                ctx.font = "12px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(leaf.label, leaf.x, leaf.y);
+            });
+
+            // Draw legend
+            ctx.font = "12px Arial";
+            ctx.textAlign = "left";
+            ctx.fillStyle = "#6b7280";
+            ctx.fillText("🟢 Active  🟡 Warning  🔴 Declining  ⚪ Reset", 10, canvas.height - 10);
+        }
+
+        function getLeafState() {
+            const states = ["green", "yellow", "red", "reset"];
+            return states[Math.floor(Math.random() * states.length)];
+        }
+
+        function refreshTree() {
+            drawKnowledgeTree();
+        }
+
+        async function shareTreeAsImage() {
+            try {
+                const canvas = document.getElementById("treeCanvas");
+                canvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "avatartutor-knowledge-tree.png";
+                    a.click();
+
+                    // Share message
+                    alert("📸 Knowledge Tree saved! Share it on social media to inspire others! 🌳\n\nJoin AvatarTutor: " + window.location.href);
+                });
+            } catch (error) {
+                alert("Error sharing tree: " + error.message);
+            }
+        }
+
+        // ============ BADGES ============
+        function displayBadges() {
+            const badgesGrid = document.getElementById("badgesGrid");
+            const mockBadges = [
+                {name: "First Steps", tier: "bronze", subject: "general", icon: "🚀"},
+                {name: "Streak King", tier: "silver", subject: "general", icon: "🔥"},
+                {name: "Quick Thinker", tier: "gold", subject: "general", icon: "⚡"}
+            ];
+
+            badgesGrid.innerHTML = mockBadges.map(badge => `
+                <div class="badge-item">
+                    <div class="badge-icon">${badge.icon}</div>
+                    <div class="badge-name">${badge.name}</div>
+                    <div class="badge-tier ${badge.tier}">${badge.tier}</div>
+                </div>
+            `).join("");
+        }
+
+        // ============ LEADERBOARD ============
+        async function loadLeaderboard() {
+            try {
+                const response = await fetch(`${window.BACKEND_URL}/api/leaderboard/${state.userId}`);
+                const data = await response.json();
+
+                if (data.leaderboard && data.leaderboard.length > 0) {
+                    document.getElementById("leaderboardSection").style.display = "block";
+                    const tbody = document.getElementById("leaderboardBody");
+                    tbody.innerHTML = data.leaderboard.map((colleague, idx) => `
+                        <tr>
+                            <td><strong>${idx + 1}</strong></td>
+                            <td>${colleague.user_id}</td>
+                            <td><strong>${colleague.score}</strong></td>
+                            <td>${colleague.badges}</td>
+                            <td>${colleague.streak}</td>
+                        </tr>
+                    `).join("");
+                }
+            } catch (error) {
+                console.error("Leaderboard error:", error);
+            }
+        }
+
+        // ============ USER PROFILE ============
+        async function loadUserProfile() {
+            try {
+                const response = await fetch(`${window.BACKEND_URL}/api/user/${state.userId}`);
+                const data = response.ok ? await response.json() : null;
+
+                if (data) {
+                    state.userStats = data.stats;
+                    state.userBadges = data.badges;
+                    state.knowledgeTree = data.knowledge_tree;
+                    updateStats();
+                    displayBadges();
+                }
+            } catch (error) {
+                console.error("Load profile error:", error);
+            }
+        }
+    </script>
+</body>
+</html>
