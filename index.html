@@ -416,8 +416,14 @@
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         try {
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                            const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
+                            // Ensure PDF.js is loaded
+                            if (typeof window.pdfjs === 'undefined' || typeof window.pdfjs.getDocument === 'undefined') {
+                                reject(new Error('PDF.js library not loaded'));
+                                return;
+                            }
+                            
+                            window.pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                            const pdf = await window.pdfjs.getDocument({ data: new Uint8Array(e.target.result) }).promise;
                             let text = '';
                             for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
                                 const page = await pdf.getPage(i);
