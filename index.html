@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AvatarTutor — AI-Powered Exam Prep</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -25,7 +27,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: var(--bg-light);
             color: var(--text-dark);
             line-height: 1.6;
@@ -43,8 +45,6 @@
             border-right: 1px solid var(--border);
             overflow-y: auto;
             padding: 20px;
-            display: flex;
-            flex-direction: column;
         }
 
         .sidebar-header {
@@ -70,11 +70,7 @@
             display: flex;
             gap: 8px;
             margin-bottom: 8px;
-        }
-
-        .sidebar-option input[type="radio"],
-        .sidebar-option input[type="checkbox"] {
-            cursor: pointer;
+            align-items: center;
         }
 
         .sidebar-option label {
@@ -96,6 +92,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .header h1 {
@@ -105,6 +103,7 @@
         .header-actions {
             display: flex;
             gap: 12px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -115,9 +114,6 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
         }
 
         .btn-primary {
@@ -153,14 +149,12 @@
             display: block;
         }
 
-        /* Upload Zone */
         .upload-zone {
             border: 2px dashed var(--primary);
             border-radius: 12px;
             padding: 40px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
             background: rgba(99, 102, 241, 0.05);
         }
 
@@ -183,14 +177,9 @@
             display: none;
         }
 
-        /* Quiz */
         .quiz-container {
             max-width: 800px;
             margin: 0 auto;
-        }
-
-        .quiz-header {
-            margin-bottom: 30px;
         }
 
         .quiz-progress {
@@ -212,7 +201,6 @@
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 24px;
-            line-height: 1.6;
         }
 
         .options {
@@ -233,23 +221,16 @@
 
         .option:hover:not(.answered) {
             border-color: var(--primary);
-            background: rgba(99, 102, 241, 0.05);
         }
 
         .option.correct {
             border-color: var(--success);
             background: rgba(16, 185, 129, 0.1);
-            color: var(--success);
         }
 
         .option.incorrect {
             border-color: var(--danger);
             background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
-
-        .option.answered {
-            cursor: default;
         }
 
         .explanation {
@@ -264,114 +245,10 @@
             display: block;
         }
 
-        .explanation h4 {
-            margin-bottom: 8px;
-            color: var(--primary);
-        }
-
-        /* Knowledge Tree */
-        .tree-container {
-            text-align: center;
-            margin: 40px 0;
-        }
-
-        canvas {
-            max-width: 100%;
-            border-radius: 8px;
-            background: var(--bg-white);
-        }
-
-        /* Badges */
-        .badges-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 20px;
-            margin-top: 20px;
-        }
-
-        .badge {
-            text-align: center;
-            padding: 16px;
-            background: var(--bg-white);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            transition: transform 0.3s ease;
-        }
-
-        .badge:hover {
-            transform: translateY(-4px);
-        }
-
-        .badge-icon {
-            font-size: 48px;
-            margin-bottom: 12px;
-        }
-
-        .badge-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .badge.locked {
-            opacity: 0.4;
-            filter: grayscale(1);
-        }
-
-        /* Leaderboard */
-        .leaderboard-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--bg-white);
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .leaderboard-table th {
-            background: var(--primary);
-            color: white;
-            padding: 16px;
-            text-align: left;
-            font-weight: 600;
-        }
-
-        .leaderboard-table td {
-            padding: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .leaderboard-table tr:hover {
-            background: var(--bg-light);
-        }
-
-        /* Loading & Messages */
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            font-size: 16px;
-            color: var(--text-muted);
-        }
-
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 3px solid var(--border);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
         .message {
             padding: 16px;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin: 20px 0;
             display: flex;
             align-items: center;
             gap: 12px;
@@ -389,6 +266,25 @@
             border: 1px solid var(--success);
         }
 
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -398,7 +294,6 @@
                 width: 100%;
                 border-right: none;
                 border-bottom: 1px solid var(--border);
-                max-height: 200px;
             }
 
             .content {
@@ -449,22 +344,15 @@
                 <div class="sidebar-label">Questions</div>
                 <div class="sidebar-option">
                     <input type="radio" id="q-10" name="num_questions" value="10" checked>
-                    <label for="q-10">10</label>
+                    <label for="q-10">10 questions</label>
+                </div>
+                <div class="sidebar-option">
+                    <input type="radio" id="q-15" name="num_questions" value="15">
+                    <label for="q-15">15 questions</label>
                 </div>
                 <div class="sidebar-option">
                     <input type="radio" id="q-20" name="num_questions" value="20">
-                    <label for="q-20">20</label>
-                </div>
-                <div class="sidebar-option">
-                    <input type="radio" id="q-25" name="num_questions" value="25">
-                    <label for="q-25">25</label>
-                </div>
-            </div>
-
-            <div class="sidebar-section">
-                <div class="sidebar-option">
-                    <input type="checkbox" id="colleague-compare">
-                    <label for="colleague-compare">Compare with colleagues</label>
+                    <label for="q-20">20 questions</label>
                 </div>
             </div>
         </div>
@@ -476,9 +364,6 @@
                 <div class="header-actions">
                     <button class="btn btn-secondary" onclick="switchTab('upload')">📤 Upload</button>
                     <button class="btn btn-secondary" onclick="switchTab('quiz')">📝 Quiz</button>
-                    <button class="btn btn-secondary" onclick="switchTab('tree')">🌳 Tree</button>
-                    <button class="btn btn-secondary" onclick="switchTab('badges')">🏆 Badges</button>
-                    <button class="btn btn-secondary" onclick="switchTab('leaderboard')">📊 Leaderboard</button>
                 </div>
             </div>
 
@@ -487,7 +372,7 @@
                 <div id="upload" class="tab-content active">
                     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
                         <h2>📂 Upload Study Material</h2>
-                        <p>Drag & drop a PDF or Word document, or click to browse</p>
+                        <p>Click to select a PDF or Word document</p>
                     </div>
                     <input type="file" id="fileInput" accept=".pdf,.doc,.docx" onchange="handleFileUpload(event)">
                     <div id="uploadStatus" style="margin-top: 20px;"></div>
@@ -499,112 +384,56 @@
                         <div id="quizContent"></div>
                     </div>
                 </div>
-
-                <!-- Knowledge Tree Tab -->
-                <div id="tree" class="tab-content">
-                    <div class="tree-container">
-                        <h2>Your Knowledge Tree 🌳</h2>
-                        <p style="margin: 20px 0; color: var(--text-muted);">Track your daily learning progress. Green leaves = recent practice, yellow = 24h without practice, red = needs revival</p>
-                        <canvas id="treeCanvas"></canvas>
-                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="shareTreeAsImage()">Share as PNG</button>
-                    </div>
-                </div>
-
-                <!-- Badges Tab -->
-                <div id="badges" class="tab-content">
-                    <h2>Your Badges 🏆</h2>
-                    <div class="badges-grid" id="badgesGrid"></div>
-                </div>
-
-                <!-- Leaderboard Tab -->
-                <div id="leaderboard" class="tab-content">
-                    <h2>Leaderboard 📊</h2>
-                    <table class="leaderboard-table">
-                        <thead>
-                            <tr>
-                                <th>Rank</th>
-                                <th>Name</th>
-                                <th>Score</th>
-                                <th>Accuracy</th>
-                            </tr>
-                        </thead>
-                        <tbody id="leaderboardBody"></tbody>
-                    </table>
-                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuration
-        const ANTHROPIC_API_KEY = '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';
-        const ELEVEN_LABS_KEY = '830c69c87574d7bc94c5bdef7b5103418c8b1aaab75a2586eafde137813357a0';
+        // Set up PDF.js worker
+        pdfjsWorker.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // State
+        const ANTHROPIC_API_KEY = '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';
+
         let userData = {
-            userId: 'user_' + Math.random().toString(36).substr(2, 9),
             currentDocument: null,
             currentQuestions: [],
             currentQuestionIndex: 0,
             answeredQuestions: [],
             userStats: {
                 totalAnswered: 0,
-                correct: 0,
-                streak: 0,
-                score: 0,
-                badges: []
-            },
-            knowledgeTree: {
-                topics: ['Math', 'English', 'Science', 'History', 'Logic']
+                correct: 0
             }
         };
 
-        // Load user data from localStorage
-        function loadUserData() {
-            const stored = localStorage.getItem('avatartutor_' + userData.userId);
-            if (stored) {
-                userData = JSON.parse(stored);
-            }
-        }
-
-        // Save user data to localStorage
-        function saveUserData() {
-            localStorage.setItem('avatartutor_' + userData.userId, JSON.stringify(userData));
-        }
-
-        // Tab switching
+        // Switch Tab Function
         function switchTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
             document.getElementById(tabName).classList.add('active');
-
-            if (tabName === 'tree') {
-                setTimeout(() => drawKnowledgeTree(), 100);
-            } else if (tabName === 'badges') {
-                updateBadgesDisplay();
-            } else if (tabName === 'leaderboard') {
-                updateLeaderboard();
-            }
         }
 
-        // File upload handler
+        // Handle File Upload
         async function handleFileUpload(event) {
             const file = event.target.files[0];
             if (!file) return;
 
             const statusDiv = document.getElementById('uploadStatus');
-            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Extracting document...</div>';
+            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Reading file...</div>';
 
             try {
                 let text = '';
 
                 if (file.type === 'application/pdf') {
-                    // For PDF, we'll use a simple text extraction approach
-                    // In production, you'd use pdf.js or pdfplumber via an API
                     text = await extractPdfText(file);
                 } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.type === 'application/msword') {
                     text = await extractWordText(file);
+                } else {
+                    throw new Error('Unsupported file type');
+                }
+
+                if (!text || text.trim().length < 50) {
+                    throw new Error('Could not extract text from document');
                 }
 
                 userData.currentDocument = {
@@ -613,102 +442,100 @@
                     uploadedAt: new Date().toISOString()
                 };
 
-                // Detect subject
-                const subject = detectSubject(text);
-                userData.currentDocument.subject = subject;
+                statusDiv.innerHTML = '<div class="message success">✓ Document loaded successfully! Generating questions...</div>';
 
-                statusDiv.innerHTML = `<div class="message success">✓ Document loaded: ${file.name}<br>Subject detected: ${subject}</div>`;
-
-                // Generate questions
                 await generateQuestions();
-                saveUserData();
-                switchTab('quiz');
 
             } catch (error) {
                 statusDiv.innerHTML = `<div class="message error">✗ Error: ${error.message}</div>`;
+                console.error('Upload error:', error);
             }
         }
 
-        // Extract text from PDF (simplified)
+        // Extract PDF Text
         async function extractPdfText(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
-                        // For now, return a placeholder message
-                        // In production, use pdf.js library
-                        resolve('PDF content extracted. Please use Chrome DevTools to see full extraction.');
+                        const pdf = await pdfjsWorker.getDocument({
+                            data: new Uint8Array(e.target.result)
+                        }).promise;
+
+                        let text = '';
+                        for (let i = 1; i <= pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(item => item.str).join(' ') + '\n';
+                        }
+
+                        resolve(text);
                     } catch (err) {
-                        reject(err);
+                        reject(new Error('Failed to extract PDF text: ' + err.message));
                     }
                 };
+                reader.onerror = () => reject(new Error('Failed to read file'));
                 reader.readAsArrayBuffer(file);
             });
         }
 
-        // Extract text from Word document
+        // Extract Word Text
         async function extractWordText(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
-                        // Simplified: Word files are ZIP archives, extract text.xml
-                        // In production, use mammoth.js or similar
-                        resolve('Word document content extracted.');
+                        const zip = new JSZip();
+                        const data = await zip.loadAsync(e.target.result);
+
+                        if (data.files['word/document.xml']) {
+                            const xmlContent = await data.files['word/document.xml'].async('string');
+                            const parser = new DOMParser();
+                            const xmlDoc = parser.parseFromString(xmlContent, 'text/xml');
+                            const textElements = xmlDoc.getElementsByTagName('w:t');
+
+                            let text = '';
+                            for (let i = 0; i < textElements.length; i++) {
+                                text += textElements[i].textContent + ' ';
+                            }
+
+                            resolve(text);
+                        } else {
+                            reject(new Error('Invalid Word document format'));
+                        }
                     } catch (err) {
-                        reject(err);
+                        reject(new Error('Failed to extract Word text: ' + err.message));
                     }
                 };
-                reader.readAsText(file);
+                reader.onerror = () => reject(new Error('Failed to read file'));
+                reader.readAsArrayBuffer(file);
             });
         }
 
-        // Subject detection
-        function detectSubject(text) {
-            const keywords = {
-                'Medical': ['anatomy', 'disease', 'treatment', 'patient', 'symptom'],
-                'English': ['grammar', 'literature', 'vocabulary', 'essay', 'writing'],
-                'Finance': ['stock', 'bond', 'investment', 'portfolio', 'market'],
-                'GMAT': ['quantitative', 'verbal', 'analytical', 'reading', 'math'],
-                'General': []
-            };
-
-            const lowerText = text.toLowerCase();
-            for (const [subject, words] of Object.entries(keywords)) {
-                if (words.some(word => lowerText.includes(word))) {
-                    return subject;
-                }
-            }
-            return 'General';
-        }
-
-        // Generate questions via Claude API
+        // Generate Questions via Claude API
         async function generateQuestions() {
-            const statusDiv = document.getElementById('uploadStatus');
-            statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Generating questions with Claude...</div>';
+            const numQuestions = parseInt(document.querySelector('input[name="num_questions"]:checked').value);
+            const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
 
             try {
-                const numQuestions = parseInt(document.querySelector('input[name="num_questions"]:checked').value);
-                const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
-
                 const prompt = `Based on this study material, generate exactly ${numQuestions} multiple-choice questions. Each question should have 4 options (A, B, C, D) and one correct answer.
 
-Material:
+Material (first 2000 characters):
 ${userData.currentDocument.content.substring(0, 2000)}
 
-Difficulty: ${difficulty}
+Difficulty level: ${difficulty}
 
-Return the response as a JSON array with this structure:
+IMPORTANT: Return ONLY valid JSON array, nothing else. No markdown, no explanation, just JSON.
+
+Format:
 [
   {
-    "question": "Question text here?",
+    "question": "Question text?",
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correct": 0,
     "explanation": "Why option A is correct..."
   }
-]
-
-Only return valid JSON, no other text.`;
+]`;
 
                 const response = await fetch('https://api.anthropic.com/v1/messages', {
                     method: 'POST',
@@ -720,12 +547,10 @@ Only return valid JSON, no other text.`;
                     body: JSON.stringify({
                         model: 'claude-opus-4-5',
                         max_tokens: 4000,
-                        messages: [
-                            {
-                                role: 'user',
-                                content: prompt
-                            }
-                        ]
+                        messages: [{
+                            role: 'user',
+                            content: prompt
+                        }]
                     })
                 });
 
@@ -746,17 +571,20 @@ Only return valid JSON, no other text.`;
                 userData.currentQuestionIndex = 0;
                 userData.answeredQuestions = [];
 
-                statusDiv.innerHTML = `<div class="message success">✓ Generated ${userData.currentQuestions.length} questions!</div>`;
+                document.getElementById('uploadStatus').innerHTML = `<div class="message success">✓ Generated ${userData.currentQuestions.length} questions! Starting quiz...</div>`;
 
-                // Display first question
-                displayQuestion();
+                setTimeout(() => {
+                    switchTab('quiz');
+                    displayQuestion();
+                }, 1000);
 
             } catch (error) {
-                statusDiv.innerHTML = `<div class="message error">✗ Error generating questions: ${error.message}</div>`;
+                document.getElementById('uploadStatus').innerHTML = `<div class="message error">✗ Error generating questions: ${error.message}</div>`;
+                console.error('Generation error:', error);
             }
         }
 
-        // Display current question
+        // Display Current Question
         function displayQuestion() {
             if (userData.currentQuestionIndex >= userData.currentQuestions.length) {
                 showQuizCompletion();
@@ -795,12 +623,11 @@ Only return valid JSON, no other text.`;
             document.getElementById('quizContent').innerHTML = html;
         }
 
-        // Answer question
+        // Answer Question
         function answerQuestion(selectedIndex) {
             const question = userData.currentQuestions[userData.currentQuestionIndex];
             const isCorrect = selectedIndex === question.correct;
 
-            // Mark options
             document.querySelectorAll('.option').forEach((opt, idx) => {
                 opt.classList.add('answered');
                 if (idx === question.correct) {
@@ -810,27 +637,19 @@ Only return valid JSON, no other text.`;
                 }
             });
 
-            // Update stats
             userData.answeredQuestions.push({
                 questionIndex: userData.currentQuestionIndex,
                 selectedIndex: selectedIndex,
-                isCorrect: isCorrect,
-                answeredAt: new Date().toISOString()
+                isCorrect: isCorrect
             });
 
             userData.userStats.totalAnswered++;
             if (isCorrect) {
                 userData.userStats.correct++;
-                userData.userStats.streak++;
-                userData.userStats.score += 10;
-            } else {
-                userData.userStats.streak = 0;
             }
 
-            // Show explanation
             document.getElementById('explanation').classList.add('show');
 
-            // Next button
             setTimeout(() => {
                 const nextBtn = document.createElement('button');
                 nextBtn.className = 'btn btn-primary';
@@ -842,11 +661,9 @@ Only return valid JSON, no other text.`;
                 };
                 document.getElementById('quizContent').appendChild(nextBtn);
             }, 500);
-
-            saveUserData();
         }
 
-        // Quiz completion
+        // Show Quiz Completion
         function showQuizCompletion() {
             const accuracy = Math.round((userData.userStats.correct / userData.userStats.totalAnswered) * 100);
 
@@ -857,114 +674,11 @@ Only return valid JSON, no other text.`;
                     <div style="background: var(--bg-light); padding: 20px; border-radius: 8px; margin: 20px 0;">
                         <div style="font-size: 28px; font-weight: 700; color: var(--primary);">${userData.userStats.correct}/${userData.userStats.totalAnswered}</div>
                         <p style="color: var(--text-muted); margin-top: 8px;">Accuracy: ${accuracy}%</p>
-                        <p style="color: var(--text-muted); margin-top: 8px;">Current Streak: ${userData.userStats.streak}</p>
-                        <p style="color: var(--text-muted); margin-top: 8px;">Total Score: ${userData.userStats.score}</p>
                     </div>
                     <button class="btn btn-primary" onclick="switchTab('upload')">Upload Another Document</button>
                 </div>
             `;
         }
-
-        // Knowledge Tree drawing
-        function drawKnowledgeTree() {
-            const canvas = document.getElementById('treeCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 600;
-            canvas.height = 400;
-
-            // Simple tree visualization
-            const topics = userData.currentDocument ? [userData.currentDocument.subject] : userData.knowledgeTree.topics;
-
-            ctx.fillStyle = '#f9fafb';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw trunk
-            ctx.fillStyle = '#8b7355';
-            ctx.fillRect(canvas.width / 2 - 10, canvas.height / 2, 20, 100);
-
-            // Draw leaves (one per topic)
-            topics.forEach((topic, idx) => {
-                const angle = (idx / topics.length) * Math.PI * 2;
-                const x = canvas.width / 2 + Math.cos(angle) * 100;
-                const y = canvas.height / 2 - 80 + Math.sin(angle) * 80;
-
-                // Leaf color based on recency
-                let color = '#10b981'; // green
-                const lastPractice = userData.answeredQuestions[userData.answeredQuestions.length - 1]?.answeredAt;
-                if (lastPractice) {
-                    const hours = (new Date() - new Date(lastPractice)) / (1000 * 60 * 60);
-                    if (hours > 72) color = '#ef4444'; // red
-                    else if (hours > 48) color = '#f59e0b'; // yellow
-                }
-
-                ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.arc(x, y, 15, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Topic label
-                ctx.fillStyle = var('--text-dark');
-                ctx.font = '12px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(topic.substring(0, 8), x, y + 30);
-            });
-        }
-
-        // Share tree as PNG
-        function shareTreeAsImage() {
-            const canvas = document.getElementById('treeCanvas');
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL();
-            link.download = 'knowledge-tree.png';
-            link.click();
-        }
-
-        // Badges
-        function updateBadgesDisplay() {
-            const allBadges = [
-                { id: 'first-steps', name: '🚀 First Steps', unlocked: userData.userStats.totalAnswered >= 1 },
-                { id: 'streak-king', name: '🔥 Streak King', unlocked: userData.userStats.streak >= 5 },
-                { id: 'quick-thinker', name: '⚡ Quick Thinker', unlocked: userData.userStats.totalAnswered >= 10 },
-                { id: 'marathon', name: '📚 Marathon Master', unlocked: userData.userStats.totalAnswered >= 25 },
-                { id: 'perfect', name: '💯 Perfect Score', unlocked: userData.userStats.correct >= 5 },
-                { id: 'consistency', name: '📈 Consistency', unlocked: userData.userStats.streak >= 3 }
-            ];
-
-            const grid = document.getElementById('badgesGrid');
-            grid.innerHTML = allBadges.map(badge => `
-                <div class="badge ${badge.unlocked ? '' : 'locked'}">
-                    <div class="badge-icon">${badge.name.split(' ')[0]}</div>
-                    <div class="badge-name">${badge.name.split(' ').slice(1).join(' ')}</div>
-                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;">
-                        ${badge.unlocked ? '✓ Unlocked' : '🔒 Locked'}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        // Leaderboard
-        function updateLeaderboard() {
-            const leaderboard = [
-                { rank: 1, name: 'You', score: userData.userStats.score, accuracy: Math.round((userData.userStats.correct / userData.userStats.totalAnswered) * 100 || 0) + '%' },
-                { rank: 2, name: 'Alex Chen', score: 450, accuracy: '92%' },
-                { rank: 3, name: 'Jordan Smith', score: 380, accuracy: '88%' },
-                { rank: 4, name: 'Morgan Lee', score: 290, accuracy: '85%' },
-                { rank: 5, name: 'Casey Brown', score: 210, accuracy: '80%' }
-            ];
-
-            const tbody = document.getElementById('leaderboardBody');
-            tbody.innerHTML = leaderboard.map(entry => `
-                <tr ${entry.rank === 1 ? 'style="background: rgba(99, 102, 241, 0.1); font-weight: 600;"' : ''}>
-                    <td>${entry.rank}</td>
-                    <td>${entry.name}</td>
-                    <td>${entry.score}</td>
-                    <td>${entry.accuracy}</td>
-                </tr>
-            `).join('');
-        }
-
-        // Initialize
-        loadUserData();
     </script>
 </body>
 </html>
