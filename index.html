@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AvatarTutor — AI-Powered Exam Prep</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --success: #10b981;
+            --danger: #ef4444;
+            --bg-light: #f9fafb;
+            --bg-white: #ffffff;
+            --text-dark: #111827;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--bg-white);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .sidebar-header {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .sidebar-option {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .sidebar-option label {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-dark);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .upload-zone h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .upload-zone p {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .quiz-progress {
+            height: 6px;
+            background: var(--border);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .quiz-progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .question-text {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .option {
+            padding: 16px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-white);
+        }
+
+        .option:hover:not(.answered) {
+            border-color: var(--primary);
+        }
+
+        .option.correct {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .option.incorrect {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .explanation {
+            background: var(--bg-light);
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .explanation.show {
+            display: block;
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .message.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            border: 1px solid var(--danger);
+        }
+
+        .message.success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">⚙️ Settings</div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-label">Difficulty</div>
+                <div class="sidebar-option">
+                    <input type="radio" id="diff-easy" name="difficulty" value="easy" checked>
+                    <label for="diff-easy">Easy</label>
+                </div>
+                <div class="sidebar-option">
+                    <input type="radio" id="diff-medium" name="difficulty" value="medium">
+                    <label for="diff-medium">Medium</label>
+                </div>
+                <div class="sidebar-option">
+                    <input type="radio" id="diff-hard" name="difficulty" value="hard">
+                    <label for="diff-hard">Hard</label>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-label">Questions</div>
+                <div class="sidebar-option">
+                    <input type="radio" id="q-10" name="num_questions" value="10" checked>
+                    <label for="q-10">10</label>
+                </div>
+                <div class="sidebar-option">
+                    <input type="radio" id="q-15" name="num_questions" value="15">
+                    <label for="q-15">15</label>
+                </div>
+                <div class="sidebar-option">
+                    <input type="radio" id="q-20" name="num_questions" value="20">
+                    <label for="q-20">20</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1>🎓 AvatarTutor</h1>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="app.switchTab('upload')">📤 Upload</button>
+                    <button class="btn btn-secondary" onclick="app.switchTab('quiz')">📝 Quiz</button>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- Upload Tab -->
+                <div id="upload" class="tab-content active">
+                    <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+                        <h2>📂 Upload Study Material</h2>
+                        <p>Click to select a PDF or Word document</p>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" onchange="app.handleFileUpload(event)">
+                    <div id="uploadStatus" style="margin-top: 20px;"></div>
+                </div>
+
+                <!-- Quiz Tab -->
+                <div id="quiz" class="tab-content">
+                    <div class="quiz-container">
+                        <div id="quizContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ANTHROPIC_API_KEY = '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';
+
+        const app = {
+            currentDocument: null,
+            currentQuestions: [],
+            currentQuestionIndex: 0,
+            userStats: { totalAnswered: 0, correct: 0 },
+
+            switchTab(tabName) {
+                document.querySelectorAll('.tab-content').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                document.getElementById(tabName).classList.add('active');
+            },
+
+            async handleFileUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const statusDiv = document.getElementById('uploadStatus');
+                statusDiv.innerHTML = '<div class="loading"><div class="spinner"></div>Reading file...</div>';
+
+                try {
+                    let text = '';
+
+                    if (file.type === 'text/plain') {
+                        text = await this.readTextFile(file);
+                    } else if (file.type === 'application/pdf') {
+                        text = await this.readPdfAsText(file);
+                    } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.type === 'application/msword') {
+                        text = await this.readWordAsText(file);
+                    } else {
+                        throw new Error('Supported formats: PDF, Word, TXT');
+                    }
+
+                    if (!text || text.trim().length < 30) {
+                        throw new Error('Document is too short or empty');
+                    }
+
+                    this.currentDocument = { filename: file.name, content: text };
+                    statusDiv.innerHTML = '<div class="message success">✓ Document loaded! Generating questions...</div>';
+
+                    await this.generateQuestions();
+
+                } catch (error) {
+                    statusDiv.innerHTML = `<div class="message error">✗ ${error.message}</div>`;
+                    console.error(error);
+                }
+            },
+
+            readTextFile(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => resolve(e.target.result);
+                    reader.onerror = () => reject(new Error('Cannot read file'));
+                    reader.readAsText(file);
+                });
+            },
+
+            readPdfAsText(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        try {
+                            const script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                            script.onload = async () => {
+                                const pdfjsLib = window['pdfjs-dist/build/pdf'] || window.pdfjsLib;
+                                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+                                const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
+                                let text = '';
+                                for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
+                                    const page = await pdf.getPage(i);
+                                    const content = await page.getTextContent();
+                                    text += content.items.map(item => item.str).join(' ') + ' ';
+                                }
+                                resolve(text);
+                            };
+                            script.onerror = () => reject(new Error('Cannot load PDF library'));
+                            document.head.appendChild(script);
+                        } catch (err) {
+                            reject(new Error('PDF processing failed: ' + err.message));
+                        }
+                    };
+                    reader.onerror = () => reject(new Error('Cannot read file'));
+                    reader.readAsArrayBuffer(file);
+                });
+            },
+
+            readWordAsText(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = async (e) => {
+                        try {
+                            const script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+                            script.onload = async () => {
+                                const JSZip = window.JSZip;
+                                const zip = new JSZip();
+                                const data = await zip.loadAsync(e.target.result);
+                                if (data.files['word/document.xml']) {
+                                    const xml = await data.files['word/document.xml'].async('string');
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(xml, 'text/xml');
+                                    const textElements = doc.getElementsByTagName('w:t');
+                                    let text = '';
+                                    for (let i = 0; i < textElements.length; i++) {
+                                        text += textElements[i].textContent + ' ';
+                                    }
+                                    resolve(text);
+                                } else {
+                                    reject(new Error('Invalid Word document'));
+                                }
+                            };
+                            script.onerror = () => reject(new Error('Cannot load JSZip library'));
+                            document.head.appendChild(script);
+                        } catch (err) {
+                            reject(new Error('Word processing failed: ' + err.message));
+                        }
+                    };
+                    reader.onerror = () => reject(new Error('Cannot read file'));
+                    reader.readAsArrayBuffer(file);
+                });
+            },
+
+            async generateQuestions() {
+                const numQuestions = parseInt(document.querySelector('input[name="num_questions"]:checked').value);
+                const difficulty = document.querySelector('input[name="difficulty"]:checked').value;
+
+                try {
+                    const prompt = `Generate exactly ${numQuestions} multiple-choice questions from this text. Each question has 4 options (A,B,C,D) and 1 correct answer.
+
+Text (first 1500 chars):
+${this.currentDocument.content.substring(0, 1500)}
+
+Difficulty: ${difficulty}
+
+Return ONLY valid JSON array:
+[
+  {
+    "question": "Question?",
+    "options": ["A", "B", "C", "D"],
+    "correct": 0,
+    "explanation": "Why A is correct"
+  }
+]`;
+
+                    const response = await fetch('https://api.anthropic.com/v1/messages', {
+                        method: 'POST',
+                        headers: {
+                            'x-api-key': ANTHROPIC_API_KEY,
+                            'anthropic-version': '2023-06-01',
+                            'content-type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            model: 'claude-opus-4-5',
+                            max_tokens: 3000,
+                            messages: [{ role: 'user', content: prompt }]
+                        })
+                    });
+
+                    if (!response.ok) throw new Error(`API error: ${response.status}`);
+
+                    const data = await response.json();
+                    const content = data.content[0].text;
+                    const jsonMatch = content.match(/\[[\s\S]*\]/);
+                    if (!jsonMatch) throw new Error('Invalid response from Claude');
+
+                    this.currentQuestions = JSON.parse(jsonMatch[0]);
+                    this.currentQuestionIndex = 0;
+
+                    document.getElementById('uploadStatus').innerHTML = `<div class="message success">✓ Generated ${this.currentQuestions.length} questions!</div>`;
+
+                    setTimeout(() => {
+                        this.switchTab('quiz');
+                        this.displayQuestion();
+                    }, 800);
+
+                } catch (error) {
+                    document.getElementById('uploadStatus').innerHTML = `<div class="message error">✗ ${error.message}</div>`;
+                }
+            },
+
+            displayQuestion() {
+                if (this.currentQuestionIndex >= this.currentQuestions.length) {
+                    this.showCompletion();
+                    return;
+                }
+
+                const q = this.currentQuestions[this.currentQuestionIndex];
+                const progress = ((this.currentQuestionIndex) / this.currentQuestions.length) * 100;
+
+                let html = `
+                    <div class="quiz-progress">
+                        <div class="quiz-progress-bar" style="width: ${progress}%"></div>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 12px; margin-bottom: 20px;">
+                        Question ${this.currentQuestionIndex + 1} of ${this.currentQuestions.length}
+                    </p>
+                    <div class="question-text">${q.question}</div>
+                    <div class="options">
+                        ${q.options.map((opt, i) => `
+                            <div class="option" onclick="app.answerQuestion(${i})">
+                                ${String.fromCharCode(65 + i)}) ${opt}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation" id="explanation">
+                        <h4>💡 Explanation</h4>
+                        <p>${q.explanation}</p>
+                    </div>
+                `;
+
+                document.getElementById('quizContent').innerHTML = html;
+            },
+
+            answerQuestion(selected) {
+                const q = this.currentQuestions[this.currentQuestionIndex];
+                const isCorrect = selected === q.correct;
+
+                document.querySelectorAll('.option').forEach((opt, i) => {
+                    opt.classList.add('answered');
+                    if (i === q.correct) opt.classList.add('correct');
+                    else if (i === selected && !isCorrect) opt.classList.add('incorrect');
+                });
+
+                this.userStats.totalAnswered++;
+                if (isCorrect) this.userStats.correct++;
+
+                document.getElementById('explanation').classList.add('show');
+
+                setTimeout(() => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-primary';
+                    btn.style.marginTop = '20px';
+                    btn.textContent = this.currentQuestionIndex + 1 === this.currentQuestions.length ? 'Complete' : 'Next';
+                    btn.onclick = () => {
+                        this.currentQuestionIndex++;
+                        this.displayQuestion();
+                    };
+                    document.getElementById('quizContent').appendChild(btn);
+                }, 600);
+            },
+
+            showCompletion() {
+                const accuracy = Math.round((this.userStats.correct / this.userStats.totalAnswered) * 100);
+                document.getElementById('quizContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <h2>✨ Complete!</h2>
+                        <div style="margin: 30px 0; font-size: 48px;">🎉</div>
+                        <div style="background: var(--bg-light); padding: 20px; border-radius: 8px;">
+                            <div style="font-size: 32px; font-weight: 700; color: var(--primary);">${this.userStats.correct}/${this.userStats.totalAnswered}</div>
+                            <p style="color: var(--text-muted); margin-top: 10px;">Accuracy: ${accuracy}%</p>
+                        </div>
+                        <button class="btn btn-primary" style="margin-top: 20px;" onclick="app.switchTab('upload')">Upload Another</button>
+                    </div>
+                `;
+            }
+        };
+    </script>
+</body>
+</html>
