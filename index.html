@@ -334,9 +334,9 @@
                 <div id="upload" class="tab-content active">
                     <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
                         <h2>📂 Upload Study Material</h2>
-                        <p>Click to select a PDF or Word document</p>
+                        <p>Click to select a Word document or TXT file</p>
                     </div>
-                    <input type="file" id="fileInput" accept=".pdf,.doc,.docx,.txt" onchange="app.handleFileUpload(event)">
+                    <input type="file" id="fileInput" accept=".doc,.docx,.txt" onchange="app.handleFileUpload(event)">
                     <div id="uploadStatus" style="margin-top: 20px;"></div>
                 </div>
 
@@ -351,26 +351,6 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-    <script>
-        // Load PDF.js dynamically
-        function loadPdfJs() {
-            return new Promise((resolve) => {
-                if (window.pdfjs && window.pdfjs.getDocument) {
-                    resolve();
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
-                script.onload = () => {
-                    window.pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                    resolve();
-                };
-                script.onerror = () => resolve(); // Fail gracefully
-                document.head.appendChild(script);
-            });
-        }
-    </script>
 
     <script>
         const app = {
@@ -398,12 +378,10 @@
 
                     if (file.type === 'text/plain') {
                         text = await this.readTextFile(file);
-                    } else if (file.type === 'application/pdf') {
-                        text = await this.readPdfAsText(file);
                     } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || file.type === 'application/msword') {
                         text = await this.readWordAsText(file);
                     } else {
-                        throw new Error('Supported formats: PDF, Word, TXT');
+                        throw new Error('Supported formats: Word (.docx), TXT');
                     }
 
                     if (!text || text.trim().length < 30) {
@@ -427,39 +405,6 @@
                     reader.onload = (e) => resolve(e.target.result);
                     reader.onerror = () => reject(new Error('Cannot read file'));
                     reader.readAsText(file);
-                });
-            },
-
-            readPdfAsText(file) {
-                return new Promise(async (resolve, reject) => {
-                    try {
-                        await loadPdfJs();
-                        
-                        if (!window.pdfjs || !window.pdfjs.getDocument) {
-                            reject(new Error('PDF library unavailable. Try uploading a Word or TXT file instead.'));
-                            return;
-                        }
-
-                        const reader = new FileReader();
-                        reader.onload = async (e) => {
-                            try {
-                                const pdf = await window.pdfjs.getDocument({ data: new Uint8Array(e.target.result) }).promise;
-                                let text = '';
-                                for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
-                                    const page = await pdf.getPage(i);
-                                    const content = await page.getTextContent();
-                                    text += content.items.map(item => item.str).join(' ') + ' ';
-                                }
-                                resolve(text);
-                            } catch (err) {
-                                reject(new Error('PDF processing failed: ' + err.message));
-                            }
-                        };
-                        reader.onerror = () => reject(new Error('Cannot read file'));
-                        reader.readAsArrayBuffer(file);
-                    } catch (err) {
-                        reject(err);
-                    }
                 });
             },
 
