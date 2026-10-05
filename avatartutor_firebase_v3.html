@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AvatarTutor - Firebase Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f9fafb;
+            --white: #ffffff;
+            --dark: #111827;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .auth-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .auth-box {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .auth-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+        }
+
+        .btn-secondary {
+            background: var(--bg);
+            color: var(--dark);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        .auth-toggle {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .auth-toggle button {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .app-container {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .app-container.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--white);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .user-info {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            background: var(--danger);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .main {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .menu-item {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .menu-item:hover {
+            background: var(--bg);
+        }
+
+        .menu-item.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .panel {
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .option {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .option.selected {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .option.correct {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .option.incorrect {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin: 20px 0;
+        }
+
+        .stat-box {
+            background: var(--white);
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--muted);
+            margin-top: 8px;
+            text-transform: uppercase;
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+        }
+
+        .leaderboard-table th {
+            background: var(--bg);
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .leaderboard-table td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .leaderboard-rank {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+        }
+
+        .success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+        }
+
+        .avatar-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 8px;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .avatar-emoji {
+            font-size: 80px;
+            margin-bottom: 16px;
+        }
+
+        .avatar-text {
+            font-size: 16px;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .avatar-emotion {
+            font-size: 14px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <!-- AUTH SCREEN -->
+    <div id="authScreen" class="auth-container">
+        <div class="auth-box">
+            <h2 class="auth-title">AvatarTutor</h2>
+            
+            <div id="signupForm">
+                <h3 style="margin-bottom: 20px; font-size: 18px;">Create Account</h3>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="John Doe">
+                </div>
+                <button class="btn btn-primary" onclick="signup()" style="margin-bottom: 12px;">Sign Up</button>
+                <div id="signupError" class="error" style="display:none;"></div>
+                <div class="auth-toggle">
+                    Already have account? <button onclick="toggleAuth()">Log in</button>
+                </div>
+            </div>
+
+            <div id="loginForm" style="display:none;">
+                <h3 style="margin-bottom: 20px; font-size: 18px;">Log In</h3>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="••••••••">
+                </div>
+                <button class="btn btn-primary" onclick="login()" style="margin-bottom: 12px;">Log In</button>
+                <div id="loginError" class="error" style="display:none;"></div>
+                <div class="auth-toggle">
+                    No account? <button onclick="toggleAuth()">Sign up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP SCREEN -->
+    <div id="appScreen" class="app-container">
+        <header>
+            <h1>✨ AvatarTutor</h1>
+            <div class="user-info">
+                <span id="userEmail"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </header>
+
+        <div class="main">
+            <div class="sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-label">Menu</div>
+                    <div class="menu-item active" onclick="switchPanel('quiz')">📚 Practice Quiz</div>
+                    <div class="menu-item" onclick="switchPanel('upload')">📁 Upload Content</div>
+                    <div class="menu-item" onclick="switchPanel('leaderboard')">🏆 Leaderboard</div>
+                    <div class="menu-item" onclick="switchPanel('stats')">📊 My Stats</div>
+                </div>
+            </div>
+
+            <div class="content">
+                <!-- QUIZ PANEL -->
+                <div id="quizPanel" class="panel active">
+                    <div class="card">
+                        <h2>Practice Quiz</h2>
+                        <p style="color: var(--muted); margin-top: 8px;">Answer questions and improve your skills</p>
+                    </div>
+
+                    <div id="quizContainer">
+                        <div class="card" style="text-align: center;">
+                            <p style="color: var(--muted); margin-bottom: 16px;">No questions yet. Upload content first! ⬆️</p>
+                            <button class="btn btn-primary" onclick="switchPanel('upload')">Upload Content</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UPLOAD PANEL -->
+                <div id="uploadPanel" class="panel">
+                    <div class="card">
+                        <h2>Upload Learning Content</h2>
+                        <p style="color: var(--muted); margin-top: 8px;">PDF, Word, or text files → AI generates questions</p>
+
+                        <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('fileInput').click()">
+                            <div style="font-size: 40px; margin-bottom: 12px;">📤</div>
+                            <div style="font-weight: 600; margin-bottom: 4px;">Drop files here or click</div>
+                            <div style="color: var(--muted); font-size: 14px;">Supports PDF, Word, TXT</div>
+                            <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+                        </div>
+
+                        <div id="uploadStatus" style="margin-top: 16px;"></div>
+                    </div>
+                </div>
+
+                <!-- LEADERBOARD PANEL -->
+                <div id="leaderboardPanel" class="panel">
+                    <div class="card">
+                        <h2>Global Leaderboard</h2>
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>User</th>
+                                    <th>Score</th>
+                                    <th>Accuracy</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboardBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; color: var(--muted);">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- STATS PANEL -->
+                <div id="statsPanel" class="panel">
+                    <div class="card">
+                        <h2>Your Statistics</h2>
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <div class="stat-value" id="totalScore">0</div>
+                                <div class="stat-label">Score</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value" id="totalQuestions">0</div>
+                                <div class="stat-label">Questions</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value" id="totalAccuracy">0%</div>
+                                <div class="stat-label">Accuracy</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="stat-value" id="currentStreak">0</div>
+                                <div class="stat-label">Streak</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBdULl5Tpqe6tyTu90lHBGzUu6h7z9weXs",
+            authDomain: "avatartutor-14e62.firebaseapp.com",
+            projectId: "avatartutor-14e62",
+            storageBucket: "avatartutor-14e62.firebasestorage.app",
+            messagingSenderId: "526755996950",
+            appId: "1:526755996950:web:e1eb467d5aaf088d0c1c37",
+            measurementId: "G-Z7DRS4R9DW"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+
+        let currentUser = null;
+        let currentQuestions = [];
+        let userStats = { score: 0, answered: 0, correct: 0, streak: 0 };
+
+        // AUTH STATE LISTENER
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('authScreen').style.display = 'none';
+                document.getElementById('appScreen').classList.add('active');
+                document.getElementById('userEmail').textContent = user.email;
+                
+                // Load user stats
+                await loadUserStats();
+                await loadLeaderboard();
+                await loadQuestions();
+            } else {
+                currentUser = null;
+                document.getElementById('authScreen').style.display = 'flex';
+                document.getElementById('appScreen').classList.remove('active');
+            }
+        });
+
+        // AUTHENTICATION FUNCTIONS
+        function toggleAuth() {
+            document.getElementById('signupForm').style.display = document.getElementById('signupForm').style.display === 'none' ? 'block' : 'none';
+            document.getElementById('loginForm').style.display = document.getElementById('loginForm').style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function signup() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const name = document.getElementById('signupName').value;
+            const errorDiv = document.getElementById('signupError');
+
+            if (!email || !password || !name) {
+                errorDiv.textContent = 'Please fill all fields';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                const result = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection('users').doc(result.user.uid).set({
+                    email: email,
+                    name: name,
+                    score: 0,
+                    answered: 0,
+                    correct: 0,
+                    streak: 0,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                errorDiv.style.display = 'none';
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (!email || !password) {
+                errorDiv.textContent = 'Please fill all fields';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            try {
+                await auth.signInWithEmailAndPassword(email, password);
+                errorDiv.style.display = 'none';
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        async function logout() {
+            await auth.signOut();
+        }
+
+        // PANEL NAVIGATION
+        function switchPanel(panelName) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(m => m.classList.remove('active'));
+            document.getElementById(panelName + 'Panel').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // LOAD USER STATS
+        async function loadUserStats() {
+            if (!currentUser) return;
+            const doc = await db.collection('users').doc(currentUser.uid).get();
+            if (doc.exists) {
+                userStats = doc.data();
+                document.getElementById('totalScore').textContent = userStats.score || 0;
+                document.getElementById('totalQuestions').textContent = userStats.answered || 0;
+                const accuracy = userStats.answered > 0 ? Math.round((userStats.correct / userStats.answered) * 100) : 0;
+                document.getElementById('totalAccuracy').textContent = accuracy + '%';
+                document.getElementById('currentStreak').textContent = userStats.streak || 0;
+            }
+        }
+
+        // LOAD LEADERBOARD
+        async function loadLeaderboard() {
+            try {
+                const snapshot = await db.collection('users')
+                    .orderBy('score', 'desc')
+                    .limit(10)
+                    .get();
+
+                const tbody = document.getElementById('leaderboardBody');
+                tbody.innerHTML = '';
+
+                snapshot.forEach((doc, index) => {
+                    const user = doc.data();
+                    const accuracy = user.answered > 0 ? Math.round((user.correct / user.answered) * 100) : 0;
+                    const row = tbody.insertRow();
+                    row.innerHTML = `
+                        <td class="leaderboard-rank">${index + 1}</td>
+                        <td>${user.name}</td>
+                        <td>${user.score || 0}</td>
+                        <td>${accuracy}%</td>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        // FILE UPLOAD
+        function handleDragOver(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            document.getElementById('uploadArea').classList.remove('dragover');
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            document.getElementById('uploadArea').classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            await uploadFile(files[0]);
+        }
+
+        async function handleFileSelect(e) {
+            await uploadFile(e.target.files[0]);
+        }
+
+        async function uploadFile(file) {
+            if (!currentUser) return;
+
+            const statusDiv = document.getElementById('uploadStatus');
+            statusDiv.innerHTML = '<div class="loading"></div> Uploading...';
+
+            try {
+                // Upload to Firebase Storage
+                const fileRef = storage.ref(`uploads/${currentUser.uid}/${Date.now()}_${file.name}`);
+                await fileRef.put(file);
+                const url = await fileRef.getDownloadURL();
+
+                // Save metadata to Firestore
+                await db.collection('uploads').add({
+                    userId: currentUser.uid,
+                    fileName: file.name,
+                    fileUrl: url,
+                    fileType: file.type,
+                    createdAt: new Date(),
+                    processed: false
+                });
+
+                statusDiv.innerHTML = '<div class="success">✓ File uploaded successfully!</div>';
+                await generateQuestionsFromFile(file);
+            } catch (error) {
+                statusDiv.innerHTML = '<div class="error">✗ ' + error.message + '</div>';
+            }
+        }
+
+        async function generateQuestionsFromFile(file) {
+            // Placeholder: In production, use Claude API to generate questions
+            const questions = [
+                {
+                    text: "What is the capital of France?",
+                    options: ["Paris", "London", "Berlin", "Madrid"],
+                    correct: 0,
+                    explanation: "Paris is the capital of France."
+                },
+                {
+                    text: "Who wrote Romeo and Juliet?",
+                    options: ["Shakespeare", "Marlowe", "Jonson", "Bacon"],
+                    correct: 0,
+                    explanation: "William Shakespeare wrote Romeo and Juliet."
+                }
+            ];
+
+            currentQuestions = questions;
+            renderQuiz();
+        }
+
+        async function loadQuestions() {
+            // Load sample questions for now
+            const questions = [
+                {
+                    id: 1,
+                    text: "What is 2 + 2?",
+                    options: ["3", "4", "5", "6"],
+                    correct: 1,
+                    explanation: "2 + 2 = 4"
+                },
+                {
+                    id: 2,
+                    text: "What is the largest planet in our solar system?",
+                    options: ["Saturn", "Jupiter", "Neptune", "Uranus"],
+                    correct: 1,
+                    explanation: "Jupiter is the largest planet in our solar system."
+                }
+            ];
+            currentQuestions = questions;
+            renderQuiz();
+        }
+
+        function renderQuiz() {
+            const container = document.getElementById('quizContainer');
+            if (currentQuestions.length === 0) {
+                container.innerHTML = '<div class="card"><p style="color: var(--muted); text-align: center;">No questions available.</p></div>';
+                return;
+            }
+
+            const question = currentQuestions[0];
+            container.innerHTML = `
+                <div class="card">
+                    <div class="avatar-container">
+                        <div class="avatar-emoji">🤖</div>
+                        <div class="avatar-text">Your AI Tutor</div>
+                        <div class="avatar-emotion">Ready to help!</div>
+                    </div>
+
+                    <h3 style="margin-bottom: 20px; font-size: 18px;">${question.text}</h3>
+                    
+                    <div class="quiz-options">
+                        ${question.options.map((option, idx) => `
+                            <div class="option" onclick="selectAnswer(${idx}, ${question.correct})">${option}</div>
+                        `).join('')}
+                    </div>
+
+                    <button class="btn btn-secondary" onclick="loadQuestions()" style="margin-top: 20px;">Skip Question</button>
+                </div>
+            `;
+        }
+
+        async function selectAnswer(selectedIdx, correctIdx) {
+            const question = currentQuestions[0];
+            userStats.answered++;
+            if (selectedIdx === correctIdx) {
+                userStats.correct++;
+                userStats.score += 10;
+                userStats.streak++;
+            } else {
+                userStats.streak = 0;
+            }
+
+            // Update Firestore
+            await db.collection('users').doc(currentUser.uid).update({
+                score: userStats.score,
+                answered: userStats.answered,
+                correct: userStats.correct,
+                streak: userStats.streak,
+                updatedAt: new Date()
+            });
+
+            await loadUserStats();
+            await loadLeaderboard();
+            currentQuestions.shift();
+            renderQuiz();
+        }
+    </script>
+</body>
+</html>
