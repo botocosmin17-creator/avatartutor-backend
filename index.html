@@ -416,8 +416,8 @@
                     const reader = new FileReader();
                     reader.onload = async (e) => {
                         try {
-                            pdfjsWorker.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-                            const pdf = await pdfjsWorker.getDocument({ data: new Uint8Array(e.target.result) }).promise;
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                            const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(e.target.result) }).promise;
                             let text = '';
                             for (let i = 1; i <= Math.min(pdf.numPages, 10); i++) {
                                 const page = await pdf.getPage(i);
