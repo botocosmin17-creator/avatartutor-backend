@@ -10,7 +10,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'No prompt provided' });
   }
 
-  const ANTHROPIC_API_KEY = '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';
+  const ANTHROPIC_API_KEY = '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';
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
